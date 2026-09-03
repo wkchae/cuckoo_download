@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Kaon Hybrid Bridge Test</title>
+    <script>
+        (function () {
+          try {
+            var theme = localStorage.getItem('themeMode') || 'system';
+            if (theme !== 'dark' && theme !== 'light' && theme !== 'system') {
+              theme = 'system';
+            }
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.style.colorScheme = theme === 'system' ? 'light dark' : theme;
+          } catch (_) {}
+        })();
+    </script>
+    <style>
+        :root {
+          --primary-color: #3b82f6;
+          --bg-color: #f3f4f6;
+          --card-bg: #ffffff;
+          --text-main: #1f2937;
+          --text-sub: #6b7280;
+          --border-color: #e5e7eb;
+          --console-bg: #111827;
+          --console-text: #10b981;
+        }
+
+        html[data-theme='dark'],
+        body[data-theme='dark'] {
+          --primary-color: #60a5fa;
+          --bg-color: #0f172a;
+          --card-bg: #1e293b;
+          --text-main: #f1f5f9;
+          --text-sub: #94a3b8;
+          --border-color: #334155;
+          --console-bg: #020617;
+          --console-text: #34d399;
+        }
+        html[data-theme='system'],
+        body[data-theme='system'] {
+          color-scheme: light dark;
+        }
+        @media (prefers-color-scheme: dark) {
+          html[data-theme='system'],
+          body[data-theme='system'] {
+            --primary-color: #60a5fa;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-sub: #94a3b8;
+            --border-color: #334155;
+            --console-bg: #020617;
+            --console-text: #34d399;
+          }
+        }
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+          -webkit-tap-highlight-color: transparent;
+        }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            Helvetica, Arial, sans-serif;
+          background-color: var(--bg-color);
+          color: var(--text-main);
+          padding-bottom: 320px; /* 콘솔 공간 확보 */
+          color-scheme: light dark;
+        }
+        header {
+          background: var(--card-bg);
+          padding: 16px;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        h1 {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: var(--primary-color);
+        }
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 16px;
+        }
+
+        .section {
+          background: var(--card-bg);
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 16px;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        .section-title {
+          font-size: 0.9rem;
+          font-weight: 600;
+          color: var(--text-sub);
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          border-bottom: 1px solid var(--border-color);
+          padding-bottom: 8px;
+        }
+
+        .btn-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          gap: 10px;
+        }
+
+        .file-row {
+          display: flex;
+          gap: 10px;
+          flex-direction: column;
+          flex-wrap: nowrap;
+          align-items: flex-start;
+        }
+        .file-cell {
+          width: 100%;
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .file-input {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+        .file-btn {
+          flex: 0 0 auto;
+          background: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 12px;
+          font-size: 0.9rem;
+          color: var(--text-main);
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: center;
+          font-weight: 500;
+          user-select: none;
+          white-space: nowrap;
+        }
+        .file-btn:active {
+          transform: scale(0.98);
+          background-color: var(--bg-color);
+        }
+        .file-name {
+          flex: 1;
+          min-width: 0;
+          font-size: 0.85rem;
+          color: var(--text-sub);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        button {
+          background: var(--card-bg);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 12px;
+          font-size: 0.9rem;
+          color: var(--text-main);
+          cursor: pointer;
+          transition: all 0.2s;
+          text-align: center;
+          font-weight: 500;
+        }
+        button:active {
+          transform: scale(0.98);
+          background-color: var(--bg-color);
+        }
+
+        /* Console Area */
+        .console-wrap {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 300px;
+          background: var(--console-bg);
+          border-top: 1px solid #374151;
+          display: flex;
+          flex-direction: column;
+          z-index: 200;
+          transition: height 0.3s;
+        }
+        .console-header {
+          padding: 8px 16px;
+          background: #1f2937;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          color: #9ca3af;
+          font-size: 0.8rem;
+        }
+        .console-body {
+          flex: 1;
+          padding: 12px;
+          overflow-y: auto;
+          font-family: "Menlo", "Monaco", "Courier New", monospace;
+          font-size: 0.8rem;
+          color: var(--console-text);
+          white-space: pre-wrap;
+          word-break: break-all;
+        }
+        .log-item {
+          margin-bottom: 6px;
+          border-bottom: 1px solid #1f2937;
+          padding-bottom: 4px;
+        }
+        .log-time {
+          color: #6b7280;
+          margin-right: 8px;
+        }
+        .log-type-info {
+          color: #60a5fa;
+        }
+        .log-type-error {
+          color: #ef4444;
+        }
+        .log-type-success {
+          color: #10b981;
+        }
+    </style>
+</head>
+<body data-theme="system">
+<header>
+    <h1>Hybrid Bridge Test</h1>
+    <button
+            onclick="location.reload()"
+            style="padding: 6px 12px; font-size: 0.8rem"
+    >
+        Reload
+    </button>
+</header>
+
+<div class="container">
+    <!-- 푸시 -->
+    <div class="section">
+        <div class="section-title">푸시</div>
+        <div class="btn-grid">
+            <button onclick="initPushTopic()">토픽목록 초기화</button>
+            <button onclick="getPushStatus()">알림상태</button>
+            <button onclick="getPushToken()">FCM토큰</button>
+            <button onclick="setPushStatus('NEW_TEST_TOPIC1', true)">테스트토픽1 켜기</button>
+            <button onclick="setPushStatus('NEW_TEST_TOPIC1', false)">테스트토픽1 끄기</button>
+            <button onclick="setPushStatus('NEW_TEST_TOPIC2', true)">테스트토픽2 켜기</button>
+            <button onclick="setPushStatus('NEW_TEST_TOPIC2', false)">테스트토픽2 끄기</button>
+            <button onclick="setPushStatus('NEW_TEST_TOPIC3', true)">테스트토픽3 켜기</button>
+            <button onclick="setPushStatus('NEW_TEST_TOPIC3', false)">테스트토픽3 끄기</button>
+            <button onclick="setPushStatus('NEW_TEST_TOPIC4', true)">테스트토픽4 켜기</button>
+            <button onclick="setPushStatus('NEW_TEST_TOPIC4', false)">테스트토픽4 끄기</button>
+
+
+        </div>
+    </div>
+
+    <!-- Image Section -->
+    <div class="section">
+        <div class="section-title">이미지(base64)</div>
+        <div class="btn-grid">
+            <button onclick="takePhoto('camerax')">카메라</button>
+            <button onclick="takePhoto('gallery')">갤러리</button>
+        </div>
+    </div>
+
+    <!-- File Section -->
+    <div class="section">
+        <div class="section-title">파일(input type)</div>
+        <div class="file-row">
+            <div class="file-cell">
+                <label class="file-btn" for="fileInputAny">파일 선택</label>
+                <input class="file-input" type="file" accept="*/*" id="fileInputAny"/>
+                <span class="file-name" id="fileNameAny"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Section -->
+    <div class="section">
+        <div class="section-title">스캔</div>
+        <div class="btn-grid">
+            <button onclick="scanQR()">QR스캔</button>
+            <button onclick="scanQRLogin()">QR로그인</button>
+            <button onclick="scanQRMulti()">QR멀티스캔</button>
+        </div>
+    </div>
+
+    <!-- Location Section -->
+    <div class="section">
+        <div class="section-title">위치정보</div>
+        <div class="btn-grid">
+            <button onclick="locationEnable()">위치 권한 켜기</button>
+            <button onclick="locationInfo()">위치정보 획득</button>
+        </div>
+    </div>
+
+    <!-- Feedback Section -->
+    <div class="section">
+        <div class="section-title">피드백</div>
+        <div class="btn-grid">
+            <button onclick="vibration()">진동</button>
+            <button onclick="playSound()">사운드</button>
+        </div>
+    </div>
+
+    <!-- Dark Mode Section -->
+    <div class="section">
+        <div class="section-title">테마</div>
+        <div class="btn-grid">
+            <button onclick="setThemeMode('dark')">다크모드</button>
+            <button onclick="setThemeMode('light')">라이트모드</button>
+            <button onclick="setThemeMode('system')">시스템모드</button>
+        </div>
+    </div>
+
+    <!-- Device System -->
+    <div class="section">
+        <div class="section-title">시스템</div>
+        <div class="btn-grid">
+            <button onclick="networkState()">네트워크</button>
+            <button onclick="openAppSettings()">설정창</button>
+            <button onclick="openAppSettings('lockAndPassword')">보안 설정창</button>
+        </div>
+    </div>
+
+    <!-- UI Controls -->
+    <div class="section">
+        <div class="section-title">UI 컨트롤</div>
+        <div class="btn-grid">
+            <button onclick="showAlert()">Alert</button>
+            <button onclick="toast()">토스트</button>
+            <button onclick="dialog()">다이얼로그</button>
+            <button onclick="showLoadingProgress()">로딩바 표시</button>
+            <button onclick="hideLoadingProgress()">로딩바 가리기</button>
+        </div>
+    </div>
+
+    <!-- App & Browser Section -->
+    <!-- Browser -->
+    <div class="section">
+        <div class="section-title">브라우저</div>
+        <div class="btn-grid">
+            <button onclick="inAppBrowser()">인앱 브라우저</button>
+            <button onclick="inAppPostBrowser()">인앱 브라우저(POST)</button>
+            <button onclick="externalBrowser()">외부 브라우저</button>
+            <button onclick="popupUrl()">내부 팝업</button>
+        </div>
+    </div>
+
+    <!-- OZ Report Viewer -->
+    <div class="section">
+        <div class="section-title">리포트 뷰어 (OZ)</div>
+        <div class="btn-grid">
+            <button onclick="ozReport('prod')">OZ 뷰어 (운영)</button>
+            <button onclick="ozReport('dev')">OZ 뷰어 (개발)</button>
+        </div>
+    </div>
+
+    <!-- App Control -->
+    <div class="section">
+        <div class="section-title">앱 관리</div>
+        <div class="btn-grid">
+            <button onclick="deviceInfo()">디바이스정보</button>
+            <button onclick="fileDownload()">파일다운로드</button>
+            <button onclick="launchApp()">외부앱 실행</button>
+            <button onclick="finishApp()">앱종료</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">결제</div>
+        <div class="btn-grid">
+            <button onclick="paymentCard()">카드결제</button>
+            <button onclick="paymentCash()">현금결제</button>
+            <button onclick="paymentCardCancel()">카드취소</button>
+            <button onclick="paymentCashCancel()">현금취소</button>
+            <button onclick="paymentReceiptCancel()">영수증취소</button>
+            <button onclick="paymentLogin()">페이앳 로그인</button>
+        </div>
+    </div>
+
+    <!-- Data & Security Section -->
+    <!-- Data Storage -->
+    <div class="section">
+        <div class="section-title">데이터 저장소</div>
+        <div class="btn-grid">
+            <button onclick="sharedPrefs('set')">값저장</button>
+            <button onclick="sharedPrefs('get')">값 조회</button>
+            <button onclick="sharedPrefs('remove')">값 삭제</button>
+        </div>
+    </div>
+
+    <!-- Security -->
+    <div class="section">
+        <div class="section-title">보안</div>
+        <div class="btn-grid">
+            <button onclick="encrypt()">암호화</button>
+            <button onclick="decrypt()">복호화</button>
+            <button onclick="biometric()">생체인증</button>
+        </div>
+    </div>
+
+    <!-- etc -->
+    <div class="section">
+        <div class="section-title">통신</div>
+        <div class="btn-grid">
+            <button onclick="sms()">메세지</button>
+            <button onclick="sendSMS()">SMS직접발송</button>
+            <button onclick="tel()">전화</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Console UI -->
+<div class="console-wrap" id="consoleWrap">
+    <div class="console-header">
+        <span>Console Log</span>
+        <div>
+            <button
+                    style="padding: 2px 8px; font-size: 0.7rem; margin-right: 4px"
+                    onclick="clearLog()"
+            >
+                Clear
+            </button>
+            <button
+                    style="padding: 2px 8px; font-size: 0.7rem"
+                    onclick="toggleConsole()"
+            >
+                Min/Max
+            </button>
+        </div>
+    </div>
+    <div class="console-body" id="consoleBody"></div>
+</div>
+
+<script>
+    // --- Bridges ---
+
+    /**
+     * 푸시
+     */
+    // 토픽목록 초기화
+    function initPushTopic() {
+      callBridge("initPushTopic", {
+        topics: [
+          'NEW_TEST_TOPIC1',
+          'NEW_TEST_TOPIC2',
+          'NEW_TEST_TOPIC3',
+          'NEW_TEST_TOPIC4'
+        ],
+        callback: "callbackInitPushTopic",
+      });
+    }
+    function callbackInitPushTopic(responseData) {
+      log(responseData, "success");
+    }
+
+    // 알림상태
+    function getPushStatus() {
+      callBridge("getPushStatus", {
+        callback: "callbackPushStatus",
+      });
+    }
+    // 알림켜기 & 알림끄기
+    function setPushStatus(topic, status) {
+      callBridge("setPushStatus", {
+        topic: topic,
+        status: status,
+        callback: "callbackPushStatus",
+      });
+    }
+    function callbackPushStatus(responseData) {
+      log(responseData, "success");
+    }
+
+    // Push토큰값
+    function getPushToken() {
+      callBridge("getPushToken", {
+        callback: "callbackGetPushToken"
+      });
+    }
+    function callbackGetPushToken(responseData) {
+      log(responseData, "success");
+    }
+
+
+    // 네이티브 → 웹: 대기 중인 푸시 페이로드 전달
+    // 포그라운드/백그라운드/완전종료 상태를 가리지 않고, 아직 전달 못한 푸시가 있을 때마다
+    // 배치(array)로 호출됨. 큐 관리와 중복/누락 방지는 네이티브에서 처리하므로 웹은 그냥 받아서 쓰면 됨
+    function onNativePushMessage(pushDataArray) {
+      log(pushDataArray, "success");
+    }
+
+    /**
+     * 미디어
+     */
+    // 카메라 및 갤러리 (base64)
+    function takePhoto(type) {
+      callBridge("takePhoto", {
+        type: type,
+        infoMsgs: ['정수기 점검 후 전체 외관을 촬영해주세요.\n(기계식은 전기분해 살균기 초록불 점등사진 촬영 필요)', '테스트 2 입니다.'],
+        callback: "callbackTakePhoto",
+      });
+    }
+    function callbackTakePhoto(responseData) {
+      log(responseData, "success");
+    }
+
+    // QR스캔
+    function scanQR() {
+      callBridge("scanQR", {
+        type : "qr", //qr or barcode
+        callback: "callbackScanQR"
+      });
+    }
+    function callbackScanQR(responseData) {
+      log(responseData, "success");
+    }
+
+    // QR로그인
+    function scanQRLogin() {
+      callBridge("scanQRLogin", {
+        callback: "callbackScanQRLogin"
+      });
+    }
+    function callbackScanQRLogin(responseData) {
+      log(responseData, "success");
+      //리턴된 바코드를 검증하고 오류메세지를 보여줘야 한다면 결과값을 네이티브로 호출한다.
+      if (responseData.result) {
+        callBridge("scanQRLogin", {
+          close : false,  // true면 바코드 스캔화면을 닫는다. 없거나 false이면 그대로 유지
+          verificationMsg : "QR코드의 유효기간이 만료되었습니다." // 해당 메세지를 보여준다.
+        });
+      }
+    }
+
+    // QR/바코드 멀티스캔 (여러 코드를 한 번에 인식, 완료 시 배열로 반환)
+    function scanQRMulti() {
+      callBridge("scanQRMulti", {
+        callback: "callbackScanQRMulti"
+      });
+    }
+    function callbackScanQRMulti(responseData) {
+      log(responseData, "success");
+    }
+
+    /**
+     * 위치정보
+     */
+    // 위치 권한 켜기
+    function locationEnable() {
+      callBridge("locationEnable", {
+        callback: "callbackLocationEnable"
+      });
+    }
+    function callbackLocationEnable(responseData) {
+      log(responseData, "success");
+    }
+
+    // 위치정보 획득
+    function locationInfo() {
+      callBridge("locationInfo", {
+        callback: "callbackLocationInfo"
+      });
+    }
+    function callbackLocationInfo(responseData) {
+      log(responseData, "success");
+    }
+
+    /**
+     * 사운드 및 진동
+     */
+    // 진동 발생
+    function vibration() {
+      callBridge("vibration", {
+        callback: "callbackVibration"
+      });
+    }
+    function callbackVibration(responseData) {
+      log(responseData, "success");
+    }
+
+    // 사운드 발생
+    function playSound() {
+      callBridge("playSound", {
+        callback: "callbackPlaySound"
+      });
+    }
+    function callbackPlaySound(responseData) {
+      log(responseData, "success");
+    }
+
+    // 테마모드 설정
+    function setThemeMode(type) {
+      try {
+        localStorage.setItem('themeMode', type);
+      } catch (_) {}
+      var root = document.documentElement;
+      if (root) {
+        root.setAttribute('data-theme', type);
+        root.style.colorScheme = type === 'dark' ? 'dark' : type === 'light' ? 'light' : 'light dark';
+      }
+      var body = document.body;
+      if (body) {
+        body.setAttribute('data-theme', type);
+        body.style.colorScheme = type === 'dark' ? 'dark' : type === 'light' ? 'light' : 'light dark';
+      }
+      callBridge("setThemeMode", {
+        type: type,
+        callback: "callbackSetThemeMode"
+      });
+    }
+    function callbackSetThemeMode(responseData) {
+      log(responseData, "success");
+    }
+
+    /**
+     * 시스템
+     */
+    // 네트워크 상태 조회
+    function networkState() {
+      callBridge("networkState", {
+        callback: "callbackNetworkState"
+      });
+    }
+    function callbackNetworkState(responseData) {
+      log(responseData, "success");
+    }
+
+    // 디바이스 설정창 오픈
+    function openAppSettings(type) {
+      callBridge("openAppSettings", {
+        type : type,
+        callback: "callbackOpenAppSettings"
+      });
+    }
+    function callbackOpenAppSettings(responseData) {
+      log(responseData, "success");
+    }
+
+    /**
+     * UI콘트롤
+     */
+    // javascript alert
+    function showAlert() {
+      alert("test");
+    }
+    // Toast 메시지 표시
+    function toast() {
+      callBridge("toast", {
+        message: 'test message',
+        callback: "callbackToast"
+      });
+    }
+    function callbackToast(responseData) {
+      log(responseData, "success");
+    }
+
+    // 다이얼로그 메시지 표시
+    function dialog() {
+      callBridge("alert", {
+        title : 'test title',
+        message: 'test message',
+        callback: "callbackDialog"
+      });
+    }
+    function callbackDialog(responseData) {
+      log(responseData, "success");
+    }
+
+    // 로딩바 보여주고 감추기
+    function showLoadingProgress() {
+      callBridge("loadingProgress", {
+        show: true,
+        canCancel: true,
+        callback: "callbackLoadingProgress",
+      });
+    }
+    function hideLoadingProgress() {
+      callBridge("loadingProgress", {
+        show: false,
+        callback: "callbackLoadingProgress",
+      });
+    }
+    function callbackLoadingProgress(responseData) {
+      log(responseData, "success");
+    }
+
+    /**
+     * 브라우저
+     */
+    // 인앱브라우저
+    function inAppBrowser() {
+      callBridge("openBrowser", {
+        url: "https://google.com",
+        type: "inApp",
+        callback: "callbackCallBrowser",
+      });
+    }
+    // 인앱브라우저(POST)
+    function inAppPostBrowser() {
+      callBridge("openBrowser", {
+        url: "https://wkchae62.dothome.co.kr/framework/cuckoo/post_test.php",
+        type: "inApp",
+        postParam: "key1=value1&key2=value2&key3=value3",
+        callback: "callbackCallBrowser",
+      });
+    }
+    // 외부브라우저
+    function externalBrowser() {
+      callBridge("openBrowser", {
+        url: "https://google.com",
+        callback: "callbackCallBrowser",
+      });
+    }
+    function callbackCallBrowser(responseData) {
+      log(responseData, "success");
+    }
+
+    // 내부 팝업
+    function popupUrl() {
+      callBridge("openPopup", {
+        url: "http://wkchae62.dothome.co.kr/framework/cuckoo/test.html",
+        callback: "callbackOpenPopup",
+      });
+    }
+    function callbackOpenPopup(responseData) {
+      log(responseData, "success");
+    }
+
+    /**
+     * 리포트 뷰어 (OZ Report Viewer / FORCS)
+     * 스펙: 모바일-OZ뷰어-네이티브-연동.md (계약서 입력: 작업관리 > 작업처리 > 멤버십)
+     */
+    var OZ_SERVLET_URL = {
+      prod: "https://mreport.cuckoo.co.kr/oz70/server",
+      dev: "http://mrdev1.cuckoorental.co.kr/oz70/server",
+    };
+    // FILE_NAME(ozr 파일명)은 스펙 문서 기준 확정 대기 중 — 임시로 기존 rental_new_contract 사용.
+    var OZ_FILE_NAME = "rental_new_contract";
+    function ozReport(env) {
+      callBridge("ozReport", {
+        ozParams: {
+          "connection.servlet": OZ_SERVLET_URL[env] || OZ_SERVLET_URL.dev,
+          "connection.reportname": "/" + OZ_FILE_NAME + ".ozr",
+          "odi.odinames": "normal_contract",
+          "odi.normal_contract.pcount": "1",
+          "odi.normal_contract.args1": "SEQ=12345",
+          "viewer.usemenubar": "false",
+          "viewer.usetoolbar": "false",
+          "eform.show_prev_next_input": "true",
+          "eform.signpad_type": "dialog",
+        },
+        exportFormat: "pdf",
+        previewAfterSign: true,
+        callback: "callbackOzReport",
+      });
+    }
+    function callbackOzReport(responseData) {
+      // resultCode: 0=성공(result: {pdf, name}), -1=취소/실패(result: 에러 메시지 문자열,
+      // "cancelled"는 취소 케이스 — 이 앱의 공용 브릿지 포맷({resultCode, result})을 그대로 따름.
+      // pdf(base64)는 자르지 않고 그대로 콘솔(log() 내부에서 console.log도 같이 호출)에 찍는다 —
+      // 크롬 인스펙터에서 전체 값을 확인/복사할 수 있어야 하므로 요약하지 않음.
+      console.log("callbackOzReport raw:", responseData);
+      log(responseData, responseData && responseData.resultCode === 0 ? "success" : "error");
+    }
+
+    /**
+     * 앱 관리
+     */
+    // 디바이스 정보
+    function deviceInfo() {
+      callBridge("deviceInfo", {
+        callback: "callbackDeviceInfo",
+      });
+    }
+    function callbackDeviceInfo(responseData) {
+      log(responseData, "success");
+    }
+
+    // 파일 다운로드
+    function fileDownload() {
+      callBridge("fileDownload", {
+        url: 'https://wkchae62.dothome.co.kr/clover.txt',
+        runApp: true, // true면 앱 다운로드후 바로 실행
+        callback: "callbackFileDownload",
+      });
+    }
+    function callbackFileDownload(responseData) {
+      log(responseData, "success");
+    }
+
+    // 외부 앱 호출
+    function launchApp() {
+      callBridge("launchApp", {
+        //packageName: "com.kakao.talk",
+        scheme: "kakaomap://",
+        callback: "callbackLaunchApp",
+      });
+    }
+    function callbackLaunchApp(responseData) {
+      log(responseData, "success");
+    }
+
+    // 앱종료
+    function finishApp() {
+      callBridge("finishApp", {
+        callback: "callbackFinishApp"
+      });
+    }
+    function callbackFinishApp(responseData) {
+      log(responseData, "success");
+    }
+
+    // 카드 결제 (PayAt)
+    function paymentCard() {
+      callBridge("payment", {
+        type: 'card',              // 결제 유형: card(카드결제), cash(현금결제), cancel(취소), login(로그인)
+        client_id: 'aegisep',      // PayAt 클라이언트 아이디
+        client_secret: '7adb3bdb22db89f220549925e27e53853c5f20dc8976a06d4513016718b9da96', // PayAt 클라이언트 시크릿
+        store_screen_name: '111111', // PayAt 가맹점 아이디
+        employee_screen_name: '111111', // 직원/계좌 식별 코드
+        amount: '90',             // 결제 금액 (원)
+        tax: '10',                 // 세금 (원)
+        fee: '0',                  // 수수료 (원)
+        comment: '카드',        // 상품명/결제 메모
+        additional_data: '배송 노트=경비실에 맡겨주세요', // 추가 데이터
+        customer_name: '김후퍼',    // 고객 이름
+        customer_email: 'help@whoopersoft.com', // 고객 이메일
+        customer_phone: '0248864885', // 고객 일반전화
+        customer_mobile: '01088880917', // 고객 휴대전화
+        receipt_unissued: false, // false=영수증 발행, true=미발행
+        callback: 'callbackPayment'
+      });
+    }
+
+    // 현금 결제 (PayAt)
+    function paymentCash() {
+      callBridge("payment", {
+        type: 'cash',              // 결제 유형: card(카드결제), cash(현금결제), cancel(취소), login(로그인)
+        client_id: 'aegisep',      // PayAt 클라이언트 아이디
+        client_secret: '7adb3bdb22db89f220549925e27e53853c5f20dc8976a06d4513016718b9da96', // PayAt 클라이언트 시크릿
+        store_screen_name: '111111', // PayAt 가맹점 아이디
+        employee_screen_name: '111111', // 직원/계좌 식별 코드
+        amount: '90',             // 결제 금액 (원)
+        tax: '10',                 // 세금 (원)
+        fee: '0',                  // 수수료 (원)
+        comment: '현금',        // 상품명/결제 메모
+        additional_data: '배송 노트=경비실에 맡겨주세요', // 추가 데이터
+        customer_name: '김후퍼',    // 고객 이름
+        customer_email: 'help@whoopersoft.com', // 고객 이메일
+        customer_phone: '0248864885', // 고객 일반전화
+        customer_mobile: '01088880917', // 고객 휴대전화
+        receipt_unissued: false, // 현금결제는 항상 영수증 발행됨
+        callback: 'callbackPayment'
+      });
+    }
+
+    // 카드 결제 취소 (PayAt)
+    function paymentCardCancel() {
+      callBridge("payment", {
+        type: 'cancel',            // 결제 유형: card(카드결제), cash(현금결제), cancel(취소), login(로그인)
+        client_id: 'aegisep',      // PayAt 클라이언트 아이디
+        client_secret: '7adb3bdb22db89f220549925e27e53853c5f20dc8976a06d4513016718b9da96', // PayAt 클라이언트 시크릿
+        store_screen_name: '111111', // PayAt 가맹점 아이디
+        employee_screen_name: '111111', // 직원/계좌 식별 코드
+        cancel_type: 'card',       // 취소 유형: card, cash, receipt
+        amount: '90',             // 원거래 결제 금액
+        tax: '10',                 // 원거래 부가세
+        fee: '0',                  // 원거래 봉사료
+        approval_no: '44783832',   // 원거래 승인번호
+        isdirect: false,          // false=가맹점 통해 취소, true=바로 취소
+        receipt_unissued: false,  // 취소 영수증 발행 여부
+        callback: 'callbackPayment'
+      });
+    }
+
+    // 현금 결제 취소 (PayAt)
+    function paymentCashCancel() {
+      callBridge("payment", {
+        type: 'cancel',            // 결제 유형: card(카드결제), cash(현금결제), cancel(취소), login(로그인)
+        client_id: 'aegisep',      // PayAt 클라이언트 아이디
+        client_secret: '7adb3bdb22db89f220549925e27e53853c5f20dc8976a06d4513016718b9da96', // PayAt 클라이언트 시크릿
+        store_screen_name: '111111', // PayAt 가맹점 아이디
+        employee_screen_name: '111111', // 직원/계좌 식별 코드
+        cancel_type: 'cash',       // 취소 유형: card, cash, receipt
+        amount: '90',             // 원거래 결제 금액
+        tax: '10',                 // 원거래 부가세
+        fee: '0',                  // 원거래 봉사료
+        approval_no: '21523426',  // 원거래 승인번호
+        isdirect: false,          // false=가맹점 통해 취소, true=바로 취소
+        receipt_unissued: false,  // 취소 영수증 발행 여부
+        callback: 'callbackPayment'
+      });
+    }
+
+    // 영수증 취소 (PayAt)
+    function paymentReceiptCancel() {
+      callBridge("payment", {
+        type: 'cancel',            // 결제 유형: card(카드결제), cash(현금결제), cancel(취소), login(로그인)
+        client_id: 'aegisep',      // PayAt 클라이언트 아이디
+        client_secret: '7adb3bdb22db89f220549925e27e53853c5f20dc8976a06d4513016718b9da96', // PayAt 클라이언트 시크릿
+        store_screen_name: '111111', // PayAt 가맹점 아이디
+        employee_screen_name: '111111', // 직원/계좌 식별 코드
+        cancel_type: 'receipt',    // 취소 유형: card, cash, receipt
+        amount: '912',             // 원거래 결제 금액
+        tax: '92',                 // 원거래 부가세
+        fee: '0',                  // 원거래 봉사료
+        approval_no: '64803',     // 원거래 승인번호
+        isdirect: false,          // false=가맹점 통해 취소, true=바로 취소
+        receipt_unissued: false,  // 취소 영수증 발행 여부
+        callback: 'callbackPayment'
+      });
+    }
+
+    // PayAt 로그인
+    function paymentLogin() {
+      callBridge("payment", {
+        type: 'login',             // 결제 유형: card(카드결제), cash(현금결제), cancel(취소), login(로그인)
+        client_id: 'aegisep',      // PayAt 클라이언트 아이디
+        client_secret: '7adb3bdb22db89f220549925e27e53853c5f20dc8976a06d4513016718b9da96', // PayAt 클라이언트 시크릿
+        store_screen_name: '111111', // PayAt 가맹점 아이디
+        employee_screen_name: '111111', // 직원/계좌 식별 코드
+        callback: 'callbackPayment'
+      });
+    }
+
+    // PayAt 결제 결과 콜백
+    function callbackPayment(responseData) {
+      log(responseData, "success");
+    }
+
+    /**
+     * 데이타 저장소
+     */
+    // 값 저장,조회,초기화
+    function sharedPrefs(action) {
+      if (action === "set") {
+        callBridge("sharedPreferences", {
+          action: "set",
+          key: "testKey",
+          value: "testValue1234",
+          callback: "callbackSharedPreferences",
+        });
+      } else if (action === "remove") {
+        callBridge("sharedPreferences", {
+          action: "remove",
+          key: "testKey",
+          callback: "callbackSharedPreferences",
+        });
+      } else if (action === "get") {
+        callBridge("sharedPreferences", {
+          action: "get",
+          key: "testKey",
+          callback: "callbackSharedPreferences",
+        });
+      }
+    }
+    function callbackSharedPreferences(responseData) {
+      log(responseData, "success");
+    }
+
+    /**
+     * 보안
+     */
+    // 암호화
+    function encrypt() {
+      callBridge("encrypt", {
+        text: 'testMessage',
+        callback: "callbackEncrypt"
+      });
+    }
+    function callbackEncrypt(responseData) {
+      log(responseData, "success");
+    }
+
+    // 복호화
+    function decrypt() {
+      callBridge("decrypt", {
+        text: 'xxxxxxxxx',
+        callback: "callbackDecrypt"
+      });
+    }
+    function callbackDecrypt(responseData) {
+      log(responseData, "success");
+    }
+
+    // 생체인증
+    function biometric() {
+      callBridge("biometric", {
+        title:"생체인증을 해주세요",
+        callback: "callbackBiometric"
+      });
+    }
+    function callbackBiometric(responseData) {
+      log(responseData, "success");
+    }
+
+    // 문자전송
+    function sms() {
+      callBridge("sms", {
+        number:'01031259348',
+        message:'안녕하세요',
+        callback: "callbackSMS"
+      });
+    }
+    function callbackSMS(responseData) {
+      log(responseData, "success");
+    }
+
+    // SMS 직접 발송
+    function sendSMS() {
+      callBridge("sendSMS", {
+        number: '01031259348',
+        message: '안녕하세요. 테스트 메시지입니다.',
+        callback: "callbackSendSMS"
+      });
+    }
+    function callbackSendSMS(responseData) {
+      log(responseData, "success");
+    }
+
+    // 전화걸기
+    function tel() {
+      callBridge("tel", {
+        number:'01031259348',
+        callback: "callbackTEL"
+      });
+    }
+    function callbackTEL(responseData) {
+      log(responseData, "success");
+    }
+
+    // 안드로이드에서 백버튼 눌렀을때 호출됨
+    // 더이상 뒤로가지 못하면 네이티브에서 종료 진행
+    function backPressedFunction(){
+        log('backPressedFunction 호출', "success");
+        callBridge("toast", {
+            message: 'backPressedFunction 호출됨',
+            callback: "callbackToast"
+        });
+    }
+
+    /**
+     * 스플래시 화면
+     */
+    // 페이지 로딩 완료 시 스플래시 화면 감추기
+    window.addEventListener("load", function () {
+      setTimeout(function () {
+        callBridge("stopSplash", { callback: "callbackStopSplash" });
+      }, 1000); // 약간의 딜레이로 안정적 호출
+    });
+    function callbackStopSplash(responseData) {
+      log(responseData, "success");
+    }
+
+    // --- Bridge Core ---
+    /**
+     * 네이티브 브릿지 호출
+     * @param {string} bridgeName 함수명
+     * @param {object} params 파라미터 객체
+     */
+    function callBridge(bridgeName, params = {}) {
+      const callbackName = params && params.callback ? params.callback : "";
+      const payload = { ...params, callback: callbackName };
+
+      log(`Calling [${bridgeName}]`, "info");
+      if (Object.keys(params).length > 0) {
+        log(params, "info");
+      }
+
+      if (window.jsToNative) {
+        try {
+          window.jsToNative(bridgeName, payload);
+        } catch (e) {
+          log(`Error calling jsToNative: ${e.message}`, "error");
+        }
+      } else {
+        log(
+          "window.jsToNative is not defined. (Are you in the app?)",
+          "error"
+        );
+      }
+    }
+
+    // --- Logger for Debug---
+    function log(msg, type = "info") {
+      const el = document.getElementById("consoleBody");
+      const time = new Date().toLocaleTimeString();
+      const item = document.createElement("div");
+      item.className = "log-item";
+
+      let content = msg;
+      if (typeof msg === "object") {
+        try {
+          content = JSON.stringify(msg, null, 2);
+        } catch (e) {
+          content = String(msg);
+        }
+      }
+
+      item.innerHTML = `<span class="log-time">[${time}]</span><span class="log-type-${type}">[${type.toUpperCase()}]</span> ${content}`;
+      el.appendChild(item);
+      el.scrollTop = el.scrollHeight;
+      console.log(content);
+    }
+
+    function clearLog() {
+      document.getElementById("consoleBody").innerHTML = "";
+    }
+
+    function toggleConsole() {
+      const el = document.getElementById("consoleWrap");
+      if (el.style.height === "40px") el.style.height = "300px";
+      else el.style.height = "40px";
+    }
+
+    function bindFileNameLabel(params) {
+      const input = document.getElementById(params.inputId);
+      const label = document.getElementById(params.labelId);
+      if (!input || !label) {
+        return;
+      }
+      input.addEventListener("change", function () {
+        const file = input.files && input.files.length > 0 ? input.files[0] : null;
+        label.textContent = file ? file.name : "선택 없음";
+      });
+    }
+
+    bindFileNameLabel({ inputId: "fileInputAny", labelId: "fileNameAny" });
+</script>
+</body>
+</html>
