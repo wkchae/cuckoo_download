@@ -779,12 +779,13 @@
       });
     }
     function callbackOzReport(responseData) {
-      // resultCode: 0=성공(result: {pdf, name}), -1=취소/실패(result: 에러 메시지 문자열,
-      // "cancelled"는 취소 케이스 — 이 앱의 공용 브릿지 포맷({resultCode, result})을 그대로 따름.
-      // pdf(base64)는 자르지 않고 그대로 콘솔(log() 내부에서 console.log도 같이 호출)에 찍는다 —
-      // 크롬 인스펙터에서 전체 값을 확인/복사할 수 있어야 하므로 요약하지 않음.
-      console.log("callbackOzReport raw:", responseData);
-      log(responseData, responseData && responseData.resultCode === 0 ? "success" : "error");
+      const success = responseData && responseData.resultCode === 0;
+      const result = responseData && responseData.result;
+      log(success ? {
+        resultCode: responseData.resultCode,
+        name: result && result.name,
+        pdfBase64Length: result && result.pdf ? result.pdf.length : 0,
+      } : responseData, success ? "success" : "error");
     }
 
     /**
