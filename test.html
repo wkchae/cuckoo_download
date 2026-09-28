@@ -785,6 +785,7 @@
         resultCode: responseData.resultCode,
         name: result && result.name,
         pdfBase64Length: result && result.pdf ? result.pdf.length : 0,
+        pdfBase64Preview: result && result.pdf ? result.pdf.slice(0, 100) : "",
       } : responseData, success ? "success" : "error");
     }
 
