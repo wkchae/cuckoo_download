@@ -427,6 +427,7 @@
             <button onclick="sms()">메세지</button>
             <button onclick="sendSMS()">SMS직접발송</button>
             <button onclick="tel()">전화</button>
+            <button onclick="smstel()">문자/전화 선택</button>
         </div>
     </div>
 
@@ -1053,6 +1054,18 @@
     }
     function callbackTEL(responseData) {
       log(responseData, "success");
+    }
+
+    // 문자/전화 선택 팝업
+    function smstel() {
+      callBridge("smstel", {
+        number:'01031259348',
+        message:'안녕하세요',
+        callback: "callbackSMSTEL"
+      });
+    }
+    function callbackSMSTEL(responseData) {
+      log(responseData, responseData.resultCode === 0 ? "success" : "error");
     }
 
     // 안드로이드에서 백버튼 눌렀을때 호출됨
